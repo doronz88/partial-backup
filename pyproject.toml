@@ -1,0 +1,41 @@
+[project]
+name = "partial-backup"
+description = "Metadata-Aware Partial Backup Creator"
+readme = "README.md"
+requires-python = ">=3.9"
+keywords = ["ios", "backup", "partial-backup"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3 :: Only",
+]
+dynamic = ["dependencies", "version"]
+
+[project.optional-dependencies]
+test = ["pytest", "pytest-asyncio"]
+
+[project.urls]
+"Homepage" = "https://github.com/doronz88/partial-backup"
+"Bug Reports" = "https://github.com/doronz88/partial-backup/issues"
+
+[project.scripts]
+partial-backup = "partial_backup.__main__:cli"
+
+[tool.setuptools.packages.find]
+exclude = ["docs*", "tests*"]
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }
+version = {attr = "partial_backup._version.__version__"}
+
+[tool.setuptools_scm]
+version_file = "partial_backup/_version.py"
+
+[build-system]
+requires = ["setuptools>=43.0.0", "setuptools_scm>=8", "wheel"]
+build-backend = "setuptools.build_meta"
