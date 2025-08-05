@@ -1,4 +1,2 @@
-pymobiledevice3>4.14.14
-bpylist2
 rich
-click
+typer
