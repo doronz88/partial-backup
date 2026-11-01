@@ -67,13 +67,25 @@ Entries present in the reference keep its attributes (explicit metadata hints st
 ## ♻️ Restore the Backup
 
 The generated backup is compatible with [pymobiledevice3](https://github.com/doronz88/pymobiledevice3), and can be
-restored to an iOS device without erasing it:
+restored to an iOS device without a full erase. Installed apps stay installed:
 
 ```shell
 pymobiledevice3 backup2 restore output/ --source partial-backup --no-copy --system --no-remove --skip-apps
 ```
 
-- `--no-remove` keeps everything the backup doesn't list.
+> [!WARNING]
+> A restore is not additive, even with `--no-remove`. On every restore the device replaces these paths with the
+> backup's contents, deleting anything there the backup doesn't contain:
+>
+> - `HomeDomain`: `Library/Preferences`, `Library/AddressBook`, `Library/Calendar`, `Library/Notes`,
+>   `Library/SMS/sms.db`, `Library/Voicemail`, `Library/Cookies`, `Library/Safari/Bookmarks.db`,
+>   `Library/WebKit/Databases`, `Library/Caches/com.apple.WebAppCache`
+> - `CameraRollDomain`: `Media/PhotoData` (the Photos library database)
+> - every restored app container (`AppDomain-*`, `AppDomainGroup-*`, `AppDomainPlugin-*`), as a whole
+>
+> To change one of these on a device whose data matters, take a fresh backup of that device first and include its
+> full current contents for each path, with your changes applied.
+
 - `--system` is required unless `--reference` was used: `HomeDomain`, `MediaDomain` and the other domains in the
   device's `MobileBackup.framework/Domains.plist` are "system domains", and the device skips them unless the host asks
   for system files or the backup's `Lockdown.DeviceClass` matches the device.
@@ -84,9 +96,11 @@ pymobiledevice3 backup2 restore output/ --source partial-backup --no-copy --syst
   reports success.
 - App containers (`AppDomain-<bundle id>`, `AppDomainGroup-<group id>`, `AppDomainPlugin-<bundle id>`) of installed
   apps are restored too; their identifiers are listed in `Manifest.plist`'s `Applications` automatically, since the
-  device skips app domains that aren't listed there.
+  device skips app domains that aren't listed there. A container of an app that isn't installed is set aside in
+  `/var/mobile/Library/SafeHarbor` instead.
 - The device reboots when done and shows the post-restore Setup Assistant screens; backups are refused
   (`MBErrorDomain/212`) until they are completed. `--no-reboot` doesn't avoid this, it only postpones it.
+  Developer Mode is turned off; re-enable it with `pymobiledevice3 amfi enable-developer-mode`.
 
 For iOS 9 and older, `--legacy` writes the old `Manifest.mbdb` format directly into `output/`.
 
