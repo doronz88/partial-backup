@@ -82,6 +82,9 @@ pymobiledevice3 backup2 restore output/ --source partial-backup --no-copy --syst
   `Library/SMS/Attachments`) and some whole domains (e.g.
   `SysSharedContainerDomain-systemgroup.com.apple.configurationprofiles`) are skipped silently: the restore still
   reports success.
+- App containers (`AppDomain-<bundle id>`, `AppDomainGroup-<group id>`, `AppDomainPlugin-<bundle id>`) of installed
+  apps are restored too; their identifiers are listed in `Manifest.plist`'s `Applications` automatically, since the
+  device skips app domains that aren't listed there.
 - The device reboots when done and shows the post-restore Setup Assistant screens; backups are refused
   (`MBErrorDomain/212`) until they are completed. `--no-reboot` doesn't avoid this, it only postpones it.
 

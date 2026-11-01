@@ -45,6 +45,13 @@ DOMAIN_ROOTS = {
     "WirelessDomain": (25, 25, 0o755),
 }
 
+# App container domains, mapped to the `ContainerContentClass` a real backup lists for them in Manifest.plist
+APP_DOMAIN_PREFIXES = {
+    "AppDomain-": "Data/Application",
+    "AppDomainGroup-": "Shared/AppGroup",
+    "AppDomainPlugin-": "Data/PluginKitPlugin",
+}
+
 # NSFileProtectionCompleteUntilFirstUserAuthentication, the default iOS data protection class for files
 DEFAULT_FILE_PROTECTION_CLASS = 3
 DEFAULT_DIRECTORY_PROTECTION_CLASS = 0
@@ -466,6 +473,7 @@ class Backup:
             "Version": "10.0",
             "WasPasscodeSet": False,
         }
+        reference_applications: dict = {}
         if self.reference is not None:
             reference = self.reference.plist("Manifest.plist")
             if reference.get("IsEncrypted"):
@@ -473,6 +481,17 @@ class Backup:
             for key in ("BackupKeyBag", "Lockdown", "SystemDomainsVersion", "WasPasscodeSet"):
                 if key in reference:
                     manifest[key] = reference[key]
+            reference_applications = reference.get("Applications", {})
+        # The device restores an app container's domain only if its bundle identifier is listed here
+        for domain in sorted({file.domain for file in self.files}):
+            for prefix, content_class in APP_DOMAIN_PREFIXES.items():
+                if domain.startswith(prefix):
+                    identifier = domain[len(prefix):]
+                    manifest["Applications"][identifier] = reference_applications.get(identifier, {
+                        "CFBundleIdentifier": identifier,
+                        "ContainerContentClass": content_class,
+                    })
+                    break
         return plistlib.dumps(manifest, fmt=plistlib.FMT_BINARY)
 
     def generate_info(self) -> bytes:  # Info.plist

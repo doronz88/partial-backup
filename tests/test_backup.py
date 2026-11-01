@@ -121,3 +121,18 @@ def test_legacy_layout(source: Path, tmp_path: Path) -> None:
     for name in ("Info.plist", "Manifest.plist", "Status.plist", "Manifest.mbdb"):
         assert (output / name).exists()
     assert (output / sha1(f"HomeDomain-{PREF}".encode()).hexdigest()).read_bytes() == b"payload"
+
+
+def test_app_domains_are_listed_in_applications(tmp_path: Path) -> None:
+    root = tmp_path / "unback"
+    for domain in ("AppDomain-com.example.app", "AppDomainGroup-group.com.example", "AppDomainPlugin-com.example.ext"):
+        (root / domain / "Documents").mkdir(parents=True)
+        (root / domain / "Documents" / "file").write_bytes(b"x")
+    output = Backup.create_backup_from_directory(root).write_to_directory(tmp_path / "out")
+    applications = plistlib.loads((output / "Manifest.plist").read_bytes())["Applications"]
+    assert applications == {
+        "com.example.app": {"CFBundleIdentifier": "com.example.app", "ContainerContentClass": "Data/Application"},
+        "group.com.example": {"CFBundleIdentifier": "group.com.example", "ContainerContentClass": "Shared/AppGroup"},
+        "com.example.ext": {"CFBundleIdentifier": "com.example.ext", "ContainerContentClass": "Data/PluginKitPlugin"},
+    }
+    assert rows(output)[("AppDomain-com.example.app", "Documents/file")][2]["UserID"] == 501
